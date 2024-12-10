@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Distributed Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0f2f1;
+            margin: 0;
+            padding: 0;
+        }
+
+        #layout {
+            width: 80%;
+            margin: 50px auto;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #00695c;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #00695c;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #004b40;
+        }
+
+        #error_message {
+            display: none;
+            color: #ff0000;
+        }
+
+        #results {
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th, table td {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+<div id="layout">
+    <h1>Enter Your Search Query to Discover the Most Relevant Document:</h1>
+    <div>
+        <label for="search_text"></label>
+        <input type="text" id="search_text">
+    </div>
+    <br/>
+    <div>
+        <button id="submit_button">Search</button>
+    </div>
+    <div id="no_results_error" style="display: none;"><br/>There were no results.</div>
+    <div id="results" style="display: none;">
+        <table>
+            <thead>
+            <tr>
+                <th>Document</th>
+                <th>Score</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const button = document.getElementById("submit_button");
+        const searchBox = document.getElementById("search_text");
+        const resultsTable = document.querySelector("#results table tbody");
+        const resultsWrapper = document.getElementById("results");
+        const noResultsError = document.getElementById("no_results_error");
+
+        button.addEventListener("click", function() {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "documents_search");
+            xhr.setRequestHeader("Content-Type", "webApplication/json");
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    addResults(data);
+                } else {
+                    alert("Error connecting to the server: " + xhr.status);
+                }
+            };
+
+            const searchQuery = searchBox.value;
+            const frontEndRequest = {
+                search_query: searchQuery
+            };
+            xhr.send(JSON.stringify(frontEndRequest));
+        });
+
+        function addResults(data) {
+            const baseDir = data.documents_location;
+            resultsTable.innerHTML = "";
+
+            if (data.search_results.length === 0) {
+                resultsWrapper.style.display = "none";
+                noResultsError.style.display = "block";
+            } else {
+                noResultsError.style.display = "none";
+                resultsWrapper.style.display = "block";
+            }
+
+            data.search_results.forEach(function(result) {
+                const title = result.title;
+                const extension = result.extension;
+                const score = result.score;
+                const fullPath = baseDir + "/" + title + "." + extension;
+                const row = "<tr><td><a href=\"" + fullPath + "\">" + title + "</a></td><td>" + score + "</td></tr>";
+                resultsTable.insertAdjacentHTML("beforeend", row);
+            });
+        }
+    });
+</script>
+</body>
+</html>

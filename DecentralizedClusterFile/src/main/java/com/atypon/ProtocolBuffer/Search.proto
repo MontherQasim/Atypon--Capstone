@@ -1,0 +1,14 @@
+package distributed.search;
+
+message Request {
+    required string query = 1;
+}
+
+message Response {
+    repeated DocumentStats documents = 1;
+
+    message DocumentStats {
+        required string name = 1;
+        optional double score = 2;
+    }
+}
